@@ -14,36 +14,32 @@
   <style>
     :root[data-theme="light"] {
       color-scheme: light;
-      --bg: #fafafa;
-      --surface: #ffffff;
-      --surface-2: #f4f4f5;
-      --border: rgba(0,0,0,.09);
-      --border-strong: rgba(0,0,0,.18);
-      --text: #18181b;
-      --text-muted: rgba(24,24,27,.62);
-      --accent: #4a7afe;
-      --accent-hover: #3d6bef;
-      --accent-text: #ffffff;
+      --bg: #fafafa; --surface: #ffffff; --surface-2: #f4f4f5;
+      --border: rgba(0,0,0,.09); --border-strong: rgba(0,0,0,.18);
+      --text: #18181b; --text-muted: rgba(24,24,27,.62);
+      --accent: #4a7afe; --accent-hover: #3d6bef; --accent-text: #ffffff;
+      --danger: #e5484d; --danger-hover: #d93b40;
+      --success: #2c8a4a;
       --ghost-hover: rgba(0,0,0,.04);
-      --code-bg: rgba(0,0,0,.06);
-      --pill-bg: rgba(0,0,0,.06);
+      --code-bg: rgba(0,0,0,.06); --pill-bg: rgba(0,0,0,.06);
+      --banner-info-bg: rgba(74,122,254,.1);
+      --banner-error-bg: rgba(229,72,77,.12);
+      --banner-success-bg: rgba(44,138,74,.12);
       --shadow: 0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.04);
     }
     :root[data-theme="dark"] {
       color-scheme: dark;
-      --bg: #0a0a0c;
-      --surface: #1c1c20;
-      --surface-2: #2a2a30;
-      --border: rgba(255,255,255,.1);
-      --border-strong: rgba(255,255,255,.2);
-      --text: #f4f4f5;
-      --text-muted: rgba(244,244,245,.62);
-      --accent: #6c8eff;
-      --accent-hover: #819dff;
-      --accent-text: #0a0a0c;
+      --bg: #0a0a0c; --surface: #1c1c20; --surface-2: #2a2a30;
+      --border: rgba(255,255,255,.1); --border-strong: rgba(255,255,255,.2);
+      --text: #f4f4f5; --text-muted: rgba(244,244,245,.62);
+      --accent: #6c8eff; --accent-hover: #819dff; --accent-text: #0a0a0c;
+      --danger: #ff6369; --danger-hover: #ff7a80;
+      --success: #4dc472;
       --ghost-hover: rgba(255,255,255,.06);
-      --code-bg: rgba(255,255,255,.1);
-      --pill-bg: rgba(255,255,255,.1);
+      --code-bg: rgba(255,255,255,.1); --pill-bg: rgba(255,255,255,.1);
+      --banner-info-bg: rgba(108,142,255,.14);
+      --banner-error-bg: rgba(255,99,105,.16);
+      --banner-success-bg: rgba(77,196,114,.16);
       --shadow: 0 1px 2px rgba(0,0,0,.4), 0 1px 3px rgba(0,0,0,.3);
     }
     * { box-sizing: border-box; }
@@ -74,11 +70,10 @@
       background: var(--surface); color: var(--text);
       box-shadow: 0 1px 2px rgba(0,0,0,.1);
     }
-    h2 { font-weight: 600; font-size: 1.1rem; margin: 1.5rem 0 .75rem; }
+    h2 { font-weight: 600; font-size: 1.1rem; margin: 1.75rem 0 .75rem; }
     .sub { color: var(--text-muted); font-size: .9rem; }
     .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
+      background: var(--surface); border: 1px solid var(--border);
       border-radius: 10px; padding: 1rem 1.1rem; margin-bottom: 1rem;
       box-shadow: var(--shadow);
     }
@@ -86,7 +81,7 @@
       display: block; font-size: .8rem; font-weight: 500;
       color: var(--text-muted); margin-bottom: .35rem;
     }
-    input[type=text], input[type=url], textarea {
+    input[type=text], input[type=url], input[type=password], textarea {
       width: 100%; padding: .55rem .7rem; font-size: .95rem;
       border: 1px solid var(--border-strong); border-radius: 7px;
       font-family: inherit; background: var(--surface-2); color: var(--text);
@@ -95,7 +90,6 @@
       outline: none; border-color: var(--accent);
       box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
     }
-    textarea { font-family: ui-monospace, "SF Mono", Menlo, monospace; min-height: 5rem; }
     button {
       padding: .5rem .95rem; border-radius: 7px;
       border: 1px solid transparent;
@@ -109,6 +103,8 @@
       border-color: var(--border-strong);
     }
     button.ghost:hover { background: var(--ghost-hover); }
+    button.danger { background: var(--danger); color: white; }
+    button.danger:hover { background: var(--danger-hover); }
     button:disabled { opacity: .5; cursor: not-allowed; }
     a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
@@ -122,8 +118,7 @@
       display: flex; gap: 1rem; align-items: flex-start;
       padding: 1rem; border: 1px solid var(--border);
       border-radius: 10px; margin-bottom: .75rem;
-      background: var(--surface);
-      box-shadow: var(--shadow);
+      background: var(--surface); box-shadow: var(--shadow);
     }
     .row .info { flex: 1; min-width: 0; }
     .row .qr { flex-shrink: 0; }
@@ -132,7 +127,7 @@
       background: white; padding: 6px; border-radius: 6px;
       border: 1px solid var(--border);
     }
-    .id { font-weight: 600; font-size: 1rem; }
+    .id { font-weight: 600; font-size: 1rem; word-break: break-all; }
     .target {
       font-family: ui-monospace, "SF Mono", Menlo, monospace;
       font-size: .82rem; color: var(--text-muted); word-break: break-all;
@@ -152,24 +147,40 @@
       margin-left: .5rem; text-transform: uppercase; letter-spacing: .04em;
       vertical-align: middle;
     }
+    .edit-form { display: grid; gap: .5rem; margin-top: .5rem; }
+    .edit-form .form-actions { display: flex; gap: .4rem; }
     #empty { color: var(--text-muted); font-style: italic; padding: 1rem 0; }
-    code {
-      background: var(--code-bg); padding: 2px 7px; border-radius: 5px;
-      font-size: .88em;
-    }
+    code { background: var(--code-bg); padding: 2px 7px; border-radius: 5px; font-size: .88em; }
     details { margin-top: .6rem; }
     summary {
       cursor: pointer; color: var(--text-muted); font-size: .85rem;
       user-select: none;
     }
     summary:hover { color: var(--text); }
+    .field-row { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+    .field-row > input { flex: 1; min-width: 12rem; }
+    #banner {
+      position: sticky; top: .5rem; z-index: 10;
+      padding: .65rem .9rem; border-radius: 8px; margin-bottom: 1rem;
+      font-size: .9rem; display: none; border: 1px solid var(--border);
+    }
+    #banner.info    { display: block; background: var(--banner-info-bg); }
+    #banner.error   { display: block; background: var(--banner-error-bg); color: var(--danger); }
+    #banner.success { display: block; background: var(--banner-success-bg); color: var(--success); }
+    .mode-pill {
+      display: inline-block; padding: .2rem .55rem; border-radius: 999px;
+      font-size: .72rem; font-weight: 500; margin-left: .5rem;
+      background: var(--pill-bg); color: var(--text-muted);
+    }
+    .mode-pill.live    { background: color-mix(in srgb, var(--success) 20%, transparent); color: var(--success); }
+    .mode-pill.locked  { background: color-mix(in srgb, var(--danger) 18%, transparent);  color: var(--danger); }
   </style>
 </head>
 <body>
   <div class="topbar">
     <div class="title">
-      <h1>QR Redirect — Admin</h1>
-      <p class="sub">View your links, generate QR codes, and edit the mapping on GitHub.</p>
+      <h1>QR Redirect — Admin <span id="modePill" class="mode-pill locked">Locked</span></h1>
+      <p class="sub">Encrypted link manager.</p>
     </div>
     <div class="theme-toggle" role="group" aria-label="Theme">
       <button data-theme-btn="light" title="Light">☀</button>
@@ -178,31 +189,78 @@
     </div>
   </div>
 
+  <div id="banner"></div>
+
+  <h2 style="margin-top:0;">Settings</h2>
+
   <div class="card">
-    <label for="base">Your GitHub Pages base URL</label>
-    <input type="url" id="base" placeholder="https://yourusername.github.io/qr-redirect/">
-    <div style="display:flex; gap:.5rem; margin-top:.5rem; align-items:center;">
+    <label for="base">GitHub Pages base URL</label>
+    <div class="field-row">
+      <input type="url" id="base" placeholder="https://yourusername.github.io/qr-redirect/">
       <button id="saveBase">Save</button>
-      <span class="sub" id="baseStatus"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <label for="repoUrl">GitHub repository URL</label>
+    <div class="field-row">
+      <input type="url" id="repoUrl" placeholder="https://github.com/yourusername/qr-redirect">
+      <button id="saveRepo">Save</button>
+    </div>
+
+    <label for="branch" style="margin-top:.8rem;">Branch</label>
+    <div class="field-row">
+      <input type="text" id="branch" placeholder="main" style="max-width:12rem;">
+      <button id="saveBranch">Save</button>
+    </div>
+
+    <label for="token" style="margin-top:.8rem;">GitHub token</label>
+    <div class="field-row">
+      <input type="password" id="token" placeholder="github_pat_… or ghp_…" autocomplete="off">
+      <button id="saveToken">Save</button>
+      <button id="clearToken" class="ghost">Clear</button>
     </div>
     <details>
-      <summary>Why this is needed</summary>
-      <div class="sub" style="margin-top:.4rem;">
-        QR codes need to encode an absolute URL. This base is stored only in your browser
-        (localStorage) so the admin page can build and display the right QR.
+      <summary>How to create a token</summary>
+      <div class="sub" style="margin-top:.4rem; line-height:1.5;">
+        1. <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">github.com/settings/personal-access-tokens/new</a><br>
+        2. Repository access: <strong>Only select repositories</strong> → pick <code>qr-redirect</code><br>
+        3. Permissions → Contents: <strong>Read and write</strong>.
       </div>
     </details>
   </div>
 
   <div class="card">
-    <label>Edit links</label>
-    <p class="sub" style="margin: 0 0 .6rem;">
-      Open <code>links.json</code> on GitHub and edit it from the web UI (works on phone too).
-    </p>
-    <div style="display:flex; gap:.5rem; flex-wrap:wrap; align-items:center;">
-      <input type="url" id="repoUrl" placeholder="https://github.com/yourusername/qr-redirect">
-      <button id="saveRepo">Save repo</button>
-      <a id="editLink" class="ghost" style="display:none;" target="_blank">→ Edit links.json on GitHub</a>
+    <label for="passphrase">Encryption passphrase</label>
+    <div class="field-row">
+      <input type="password" id="passphrase" placeholder="long random passphrase" autocomplete="off">
+      <button id="genPass" class="ghost" type="button">Generate</button>
+      <button id="savePass">Save</button>
+      <button id="clearPass" class="ghost">Clear</button>
+    </div>
+    <details>
+      <summary>About the passphrase</summary>
+      <div class="sub" style="margin-top:.4rem; line-height:1.5;">
+        Used to encrypt <code>links.json</code> at rest. The same passphrase is baked into
+        every QR URL (in the <code>#k=…</code> fragment), so QRs work without anyone typing
+        it. <strong>Keep a copy somewhere safe</strong> — if you lose it and clear this browser,
+        you can't generate new QRs or decrypt existing ones. Reading existing QRs from your
+        scrapbook will still work because the passphrase is inside them.
+      </div>
+    </details>
+  </div>
+
+  <h2>Add link</h2>
+  <div class="card" id="addCard">
+    <label for="newId">ID</label>
+    <div class="field-row">
+      <input type="text" id="newId" placeholder="random hex or descriptive">
+      <button id="genId" class="ghost" type="button">Generate random</button>
+    </div>
+    <label for="newTarget" style="margin-top:.7rem;">Target URL</label>
+    <input type="url" id="newTarget" placeholder="https://drive.google.com/file/d/.../view">
+    <div class="field-row" style="margin-top:.8rem;">
+      <button id="addLink">Add link</button>
     </div>
   </div>
 
@@ -212,15 +270,15 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);
-    const baseInput = $("base");
-    const repoInput = $("repoUrl");
-    const baseStatus = $("baseStatus");
-    const editLink = $("editLink");
-    const list = $("list");
 
-    const STORE_BASE = "qrRedirect.base";
-    const STORE_REPO = "qrRedirect.repo";
-    const STORE_THEME = "qrRedirect.theme";
+    const STORE_BASE   = "qrRedirect.base";
+    const STORE_REPO   = "qrRedirect.repo";
+    const STORE_BRANCH = "qrRedirect.branch";
+    const STORE_TOKEN  = "qrRedirect.token";
+    const STORE_PASS   = "qrRedirect.pass";
+    const STORE_THEME  = "qrRedirect.theme";
+
+    const state = { map: {}, sha: null, mode: "locked", editing: null };
 
     // ---- theme toggle ----
     function applyTheme(choice) {
@@ -239,43 +297,219 @@
     document.querySelectorAll("[data-theme-btn]").forEach((b) => {
       b.addEventListener("click", () => applyTheme(b.dataset.themeBtn));
     });
-    // Reflect current preference in the toggle on load:
     applyTheme(localStorage.getItem(STORE_THEME) || "auto");
-    // If user is on "auto", follow system changes live.
     matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
       if (!localStorage.getItem(STORE_THEME)) applyTheme("auto");
     });
 
-    // ---- saved base / repo ----
-    function loadStored() {
-      baseInput.value = localStorage.getItem(STORE_BASE) || "";
-      repoInput.value = localStorage.getItem(STORE_REPO) || "";
-      updateEditLink();
+    // ---- banner ----
+    function banner(kind, text, autoHideMs) {
+      const b = $("banner"); b.className = kind; b.textContent = text;
+      if (autoHideMs) setTimeout(() => {
+        if (b.textContent === text) { b.className = ""; b.textContent = ""; }
+      }, autoHideMs);
     }
-    function updateEditLink() {
-      const r = repoInput.value.trim().replace(/\/$/, "");
-      if (r) {
-        editLink.href = r + "/edit/main/links.json";
-        editLink.style.display = "inline-block";
-      } else {
-        editLink.style.display = "none";
+
+    // ---- base64url ----
+    function b64urlEnc(bytes) {
+      let bin = ""; for (const b of bytes) bin += String.fromCharCode(b);
+      return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    }
+    function b64urlDec(s) {
+      s = s.replace(/-/g, "+").replace(/_/g, "/");
+      while (s.length % 4) s += "=";
+      const bin = atob(s);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return bytes;
+    }
+
+    // ---- crypto ----
+    async function deriveKey(pass, salt) {
+      const base = await crypto.subtle.importKey(
+        "raw", new TextEncoder().encode(pass), "PBKDF2", false, ["deriveKey"]
+      );
+      return crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt, iterations: 250000, hash: "SHA-256" },
+        base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
+      );
+    }
+    async function encryptMap(map, pass) {
+      // Reuse the existing salt if we have one so repeated saves don't churn the salt.
+      let saltBytes;
+      const existing = localStorage.getItem("qrRedirect.salt");
+      if (existing) saltBytes = b64urlDec(existing);
+      else {
+        saltBytes = crypto.getRandomValues(new Uint8Array(16));
+        localStorage.setItem("qrRedirect.salt", b64urlEnc(saltBytes));
+      }
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const key = await deriveKey(pass, saltBytes);
+      const ct = await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv }, key,
+        new TextEncoder().encode(JSON.stringify(map))
+      );
+      return {
+        v: 1,
+        salt: b64urlEnc(saltBytes),
+        iv: b64urlEnc(iv),
+        ct: b64urlEnc(new Uint8Array(ct))
+      };
+    }
+    async function decryptMap(blob, pass) {
+      if (blob.v !== 1) throw new Error("Unsupported format");
+      const salt = b64urlDec(blob.salt);
+      const iv = b64urlDec(blob.iv);
+      const ct = b64urlDec(blob.ct);
+      // Cache the salt so future encrypts use the same value.
+      localStorage.setItem("qrRedirect.salt", blob.salt);
+      const key = await deriveKey(pass, salt);
+      let pt;
+      try {
+        pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ct);
+      } catch {
+        throw new Error("Wrong passphrase");
+      }
+      return JSON.parse(new TextDecoder().decode(pt));
+    }
+
+    // ---- GitHub API ----
+    function parseRepo(url) {
+      if (!url) return null;
+      const m = url.trim().match(/github\.com[\/:]([^\/]+)\/([^\/]+?)(?:\.git|\/)?$/);
+      return m ? { owner: m[1], repo: m[2] } : null;
+    }
+    function ghAuth() {
+      const t = localStorage.getItem(STORE_TOKEN);
+      return t ? { Authorization: "Bearer " + t } : null;
+    }
+    async function ghGetFile() {
+      const repo = parseRepo($("repoUrl").value);
+      if (!repo) throw new Error("Set a valid GitHub repo URL first");
+      const branch = ($("branch").value || "main").trim();
+      const auth = ghAuth();
+      if (!auth) throw new Error("Set a GitHub token first");
+      const res = await fetch(
+        `https://api.github.com/repos/${repo.owner}/${repo.repo}/contents/links.json?ref=${encodeURIComponent(branch)}`,
+        { headers: { ...auth, Accept: "application/vnd.github+json" }, cache: "no-store" }
+      );
+      if (res.status === 404) return { content: "{}", sha: null }; // first run
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`GitHub GET ${res.status}: ${txt.slice(0,200)}`);
+      }
+      const data = await res.json();
+      // GitHub returns base64 with newlines.
+      let bin = atob(data.content.replace(/\s/g, ""));
+      let bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return { content: new TextDecoder().decode(bytes), sha: data.sha };
+    }
+    async function ghPutFile(content, sha, message) {
+      const repo = parseRepo($("repoUrl").value);
+      const branch = ($("branch").value || "main").trim();
+      const auth = ghAuth();
+      const bytes = new TextEncoder().encode(content);
+      let bin = ""; for (const b of bytes) bin += String.fromCharCode(b);
+      const body = { message, content: btoa(bin), branch };
+      if (sha) body.sha = sha;
+      const res = await fetch(
+        `https://api.github.com/repos/${repo.owner}/${repo.repo}/contents/links.json`,
+        {
+          method: "PUT",
+          headers: { ...auth, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        }
+      );
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`GitHub PUT ${res.status}: ${txt.slice(0,200)}`);
+      }
+      const data = await res.json();
+      return data.content.sha;
+    }
+
+    // ---- load / save ----
+    function setMode(m) {
+      state.mode = m;
+      const p = $("modePill");
+      if (m === "rw")     { p.textContent = "Editor mode";  p.className = "mode-pill live"; }
+      else if (m === "ro"){ p.textContent = "Read-only";    p.className = "mode-pill"; }
+      else                { p.textContent = "Locked";       p.className = "mode-pill locked"; }
+    }
+    async function loadLinks() {
+      const auth = ghAuth();
+      const repo = parseRepo($("repoUrl").value);
+      const pass = localStorage.getItem(STORE_PASS);
+
+      if (!pass) { setMode("locked"); state.map = {}; render("Set a passphrase to unlock."); return; }
+      if (!auth || !repo) { setMode("locked"); state.map = {}; render("Set repo URL and GitHub token to edit."); return; }
+
+      try {
+        const { content, sha } = await ghGetFile();
+        state.sha = sha;
+        const trimmed = content.trim();
+        if (trimmed === "" || trimmed === "{}") {
+          // First run — no encrypted file yet.
+          state.map = {};
+        } else {
+          const blob = JSON.parse(trimmed);
+          state.map = await decryptMap(blob, pass);
+        }
+        setMode("rw");
+        render();
+      } catch (e) {
+        setMode("locked");
+        state.map = {};
+        banner("error", e.message);
+        render(e.message);
       }
     }
-    $("saveBase").onclick = () => {
-      let v = baseInput.value.trim();
-      if (v && !v.endsWith("/")) v += "/";
-      baseInput.value = v;
-      localStorage.setItem(STORE_BASE, v);
-      baseStatus.textContent = "Saved.";
-      render();
-      setTimeout(() => (baseStatus.textContent = ""), 1500);
-    };
-    $("saveRepo").onclick = () => {
-      localStorage.setItem(STORE_REPO, repoInput.value.trim());
-      updateEditLink();
-    };
+    async function saveLinks(message) {
+      const pass = localStorage.getItem(STORE_PASS);
+      if (!pass) throw new Error("No passphrase set");
+      // Refresh sha first in case the file changed elsewhere.
+      let fresh;
+      try { fresh = await ghGetFile(); } catch { fresh = { sha: state.sha }; }
+      state.sha = fresh.sha;
+      const blob = await encryptMap(state.map, pass);
+      const content = JSON.stringify(blob, null, 2) + "\n";
+      state.sha = await ghPutFile(content, state.sha, message);
+    }
+    async function mutate(applyChange, message) {
+      const snapshot = JSON.stringify(state.map);
+      banner("info", "Saving…");
+      try {
+        await applyChange();
+        await saveLinks(message);
+        banner("success", "Saved.", 2500);
+      } catch (e) {
+        state.map = JSON.parse(snapshot);
+        banner("error", "Save failed: " + e.message);
+        throw e;
+      }
+    }
 
-    // ---- QR rendering ----
+    // ---- IDs / QR ----
+    function validId(id) {
+      return /^[A-Za-z0-9._-]+$/.test(id) && id.length >= 1 && id.length <= 64;
+    }
+    function genId() {
+      const a = new Uint8Array(6);
+      crypto.getRandomValues(a);
+      return Array.from(a, b => b.toString(16).padStart(2, "0")).join("");
+    }
+    function genPassphrase() {
+      const a = new Uint8Array(24);
+      crypto.getRandomValues(a);
+      return b64urlEnc(a); // 32 url-safe chars
+    }
+    function qrUrl(id) {
+      const base = $("base").value.trim();
+      const pass = localStorage.getItem(STORE_PASS);
+      if (!base || !pass) return null;
+      return base + "?id=" + encodeURIComponent(id) + "#k=" + encodeURIComponent(pass);
+    }
     function makeQR(text) {
       const qr = qrcode(0, "M");
       qr.addData(text);
@@ -284,95 +518,207 @@
     }
     function downloadDataURL(dataUrl, filename) {
       const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      a.href = dataUrl; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
     }
 
-    async function render() {
-      let map;
-      try {
-        const res = await fetch("links.json?cb=" + Date.now(), { cache: "no-store" });
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        map = await res.json();
-      } catch (e) {
-        list.innerHTML = '<div id="empty">Could not load links.json: ' + e + "</div>";
-        return;
-      }
+    // ---- rendering ----
+    function render(emptyMsg) {
+      const list = $("list");
+      const rw = state.mode === "rw";
+      $("addLink").disabled = !rw;
+      $("addLink").title = rw ? "" : "Set passphrase, repo, and token to enable editing.";
 
-      const base = baseInput.value.trim();
-      const ids = Object.keys(map);
+      const ids = Object.keys(state.map).sort();
       if (!ids.length) {
-        list.innerHTML = '<div id="empty">No links yet. Edit links.json to add some.</div>';
+        list.innerHTML = '<div id="empty">' +
+          (emptyMsg || "No links yet. Add one above.") + '</div>';
         return;
       }
-
       list.innerHTML = "";
-      ids.sort();
       for (const id of ids) {
-        const target = map[id];
-        const encoded = base
-          ? base + "?id=" + encodeURIComponent(id)
-          : "(set base URL above to generate QR)";
-
         const row = document.createElement("div");
         row.className = "row";
-
-        const info = document.createElement("div");
-        info.className = "info";
-        info.innerHTML =
-          '<div class="id">' + id + '<span class="pill">id</span></div>' +
-          '<div class="target">→ ' + target + "</div>" +
-          '<div class="encoded">QR encodes: ' + encoded + "</div>";
-
-        const actions = document.createElement("div");
-        actions.className = "actions";
-
-        if (base) {
-          const dlBtn = document.createElement("button");
-          dlBtn.textContent = "Download QR PNG";
-          dlBtn.onclick = () => downloadDataURL(makeQR(encoded), "qr-" + id + ".png");
-          actions.appendChild(dlBtn);
-
-          const copyBtn = document.createElement("button");
-          copyBtn.className = "ghost";
-          copyBtn.textContent = "Copy QR URL";
-          copyBtn.onclick = async () => {
-            await navigator.clipboard.writeText(encoded);
-            copyBtn.textContent = "Copied!";
-            setTimeout(() => (copyBtn.textContent = "Copy QR URL"), 1200);
-          };
-          actions.appendChild(copyBtn);
-        }
-
-        const openBtn = document.createElement("a");
-        openBtn.className = "ghost";
-        openBtn.textContent = "Open target";
-        openBtn.href = target;
-        openBtn.target = "_blank";
-        actions.appendChild(openBtn);
-
-        info.appendChild(actions);
-        row.appendChild(info);
-
-        if (base) {
-          const qrWrap = document.createElement("div");
-          qrWrap.className = "qr";
-          const img = document.createElement("img");
-          img.src = makeQR(encoded);
-          img.alt = "QR for " + id;
-          qrWrap.appendChild(img);
-          row.appendChild(qrWrap);
-        }
-
+        if (state.editing === id) row.appendChild(renderEdit(id));
+        else renderView(row, id, rw);
         list.appendChild(row);
       }
     }
+    function renderView(row, id, rw) {
+      const target = state.map[id];
+      const encoded = qrUrl(id);
+
+      const info = document.createElement("div");
+      info.className = "info";
+      const idEl = document.createElement("div");
+      idEl.className = "id"; idEl.textContent = id;
+      idEl.insertAdjacentHTML("beforeend", '<span class="pill">id</span>');
+      const tgtEl = document.createElement("div");
+      tgtEl.className = "target"; tgtEl.textContent = "→ " + target;
+      const encEl = document.createElement("div");
+      encEl.className = "encoded";
+      encEl.textContent = "QR encodes: " + (encoded || "(set base URL + passphrase to generate)");
+      info.appendChild(idEl); info.appendChild(tgtEl); info.appendChild(encEl);
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+      if (encoded) {
+        const dl = document.createElement("button");
+        dl.textContent = "Download QR";
+        dl.onclick = () => downloadDataURL(makeQR(encoded), "qr-" + id + ".png");
+        actions.appendChild(dl);
+
+        const cp = document.createElement("button");
+        cp.className = "ghost"; cp.textContent = "Copy URL";
+        cp.onclick = async () => {
+          await navigator.clipboard.writeText(encoded);
+          cp.textContent = "Copied!";
+          setTimeout(() => (cp.textContent = "Copy URL"), 1200);
+        };
+        actions.appendChild(cp);
+      }
+      const open = document.createElement("a");
+      open.className = "ghost"; open.textContent = "Open target";
+      open.href = target; open.target = "_blank";
+      actions.appendChild(open);
+
+      if (rw) {
+        const edit = document.createElement("button");
+        edit.className = "ghost"; edit.textContent = "Edit";
+        edit.onclick = () => { state.editing = id; render(); };
+        actions.appendChild(edit);
+
+        const del = document.createElement("button");
+        del.className = "danger"; del.textContent = "Delete";
+        del.onclick = () => deleteLink(id);
+        actions.appendChild(del);
+      }
+      info.appendChild(actions);
+      row.appendChild(info);
+
+      if (encoded) {
+        const qrWrap = document.createElement("div");
+        qrWrap.className = "qr";
+        const img = document.createElement("img");
+        img.src = makeQR(encoded); img.alt = "QR for " + id;
+        qrWrap.appendChild(img);
+        row.appendChild(qrWrap);
+      }
+    }
+    function renderEdit(id) {
+      const wrap = document.createElement("div");
+      wrap.className = "info";
+      const form = document.createElement("div");
+      form.className = "edit-form";
+      form.innerHTML = `
+        <label>ID</label>
+        <input type="text" class="edit-id" />
+        <label>Target URL</label>
+        <input type="url" class="edit-target" />
+        <div class="form-actions">
+          <button class="save">Save</button>
+          <button class="cancel ghost">Cancel</button>
+        </div>
+      `;
+      form.querySelector(".edit-id").value = id;
+      form.querySelector(".edit-target").value = state.map[id];
+      form.querySelector(".save").onclick = async () => {
+        const newId = form.querySelector(".edit-id").value.trim();
+        const newTarget = form.querySelector(".edit-target").value.trim();
+        if (!validId(newId)) { banner("error", "Invalid ID."); return; }
+        if (!newTarget) { banner("error", "Target URL is required."); return; }
+        if (newId !== id && state.map[newId]) { banner("error", `ID "${newId}" already exists.`); return; }
+        await mutate(() => {
+          delete state.map[id];
+          state.map[newId] = newTarget;
+        }, `Update link: ${id}` + (newId !== id ? ` → ${newId}` : ""));
+        state.editing = null;
+        render();
+      };
+      form.querySelector(".cancel").onclick = () => { state.editing = null; render(); };
+      wrap.appendChild(form);
+      return wrap;
+    }
+    async function deleteLink(id) {
+      if (!confirm(`Delete link "${id}"?`)) return;
+      try { await mutate(() => { delete state.map[id]; }, `Delete link: ${id}`); render(); } catch {}
+    }
+
+    // ---- wire up settings ----
+    function loadStored() {
+      $("base").value = localStorage.getItem(STORE_BASE) || "";
+      $("repoUrl").value = localStorage.getItem(STORE_REPO) || "";
+      $("branch").value = localStorage.getItem(STORE_BRANCH) || "main";
+      $("token").value = localStorage.getItem(STORE_TOKEN) ? "•".repeat(16) : "";
+      $("passphrase").value = localStorage.getItem(STORE_PASS) ? "•".repeat(16) : "";
+    }
+    $("saveBase").onclick = () => {
+      let v = $("base").value.trim();
+      if (v && !v.endsWith("/")) v += "/";
+      $("base").value = v;
+      localStorage.setItem(STORE_BASE, v);
+      banner("success", "Base URL saved.", 1500);
+      render();
+    };
+    $("saveRepo").onclick = () => {
+      localStorage.setItem(STORE_REPO, $("repoUrl").value.trim());
+      banner("success", "Repo saved.", 1500); loadLinks();
+    };
+    $("saveBranch").onclick = () => {
+      localStorage.setItem(STORE_BRANCH, ($("branch").value || "main").trim());
+      banner("success", "Branch saved.", 1500); loadLinks();
+    };
+    $("saveToken").onclick = () => {
+      const v = $("token").value.trim();
+      if (v && !v.startsWith("•")) {
+        localStorage.setItem(STORE_TOKEN, v);
+        $("token").value = "•".repeat(16);
+        banner("success", "Token saved.", 1500); loadLinks();
+      }
+    };
+    $("clearToken").onclick = () => {
+      localStorage.removeItem(STORE_TOKEN);
+      $("token").value = "";
+      banner("info", "Token cleared.", 1500); loadLinks();
+    };
+    $("genPass").onclick = () => {
+      const p = genPassphrase();
+      $("passphrase").value = p;
+      banner("info", "Passphrase generated below — click Save, then copy it somewhere safe.");
+    };
+    $("savePass").onclick = () => {
+      const v = $("passphrase").value;
+      if (v && !v.startsWith("•")) {
+        localStorage.setItem(STORE_PASS, v);
+        localStorage.removeItem("qrRedirect.salt"); // forget cached salt so we re-read from file
+        $("passphrase").value = "•".repeat(16);
+        banner("success", "Passphrase saved.", 1500); loadLinks();
+      }
+    };
+    $("clearPass").onclick = () => {
+      localStorage.removeItem(STORE_PASS);
+      localStorage.removeItem("qrRedirect.salt");
+      $("passphrase").value = "";
+      banner("info", "Passphrase cleared.", 1500); loadLinks();
+    };
+
+    // ---- add link ----
+    $("genId").onclick = () => { $("newId").value = genId(); };
+    $("addLink").onclick = async () => {
+      const id = $("newId").value.trim();
+      const target = $("newTarget").value.trim();
+      if (!validId(id)) { banner("error", "Invalid ID."); return; }
+      if (!target) { banner("error", "Target URL is required."); return; }
+      if (state.map[id]) { banner("error", `ID "${id}" already exists.`); return; }
+      try {
+        await mutate(() => { state.map[id] = target; }, `Add link: ${id}`);
+        $("newId").value = ""; $("newTarget").value = "";
+        render();
+      } catch {}
+    };
 
     loadStored();
-    render();
+    loadLinks();
   </script>
 </body>
 </html>
