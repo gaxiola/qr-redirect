@@ -1,12 +1,12 @@
 # QR Redirect
 
-A tiny GitHub Pages site that turns short IDs into redirects, so QR codes you
-print into scrapbooks keep working even when you move the underlying video.
+A tiny static site that turns short IDs into redirects, so QR codes you print
+into scrapbooks keep working even when you move the underlying video.
 
 ## How it works
 
 ```
-[QR code]  →  https://you.github.io/qr-redirect/?id=birthday-2024
+[QR code]  →  https://your-domain/?id=birthday-2024
                               │
                               ▼
                        reads links.json
@@ -15,52 +15,101 @@ print into scrapbooks keep working even when you move the underlying video.
               https://drive.google.com/...  (or any URL — LAN, NAS, etc.)
 ```
 
-The QR encodes a stable URL on your GitHub Pages site. The actual destination
-lives in `links.json` and you can change it any time without re-printing.
+The QR encodes a stable URL on your site. The actual destination lives in
+`links.json` and you can change it any time without re-printing.
+
+## Hosting
+
+Works on either:
+
+- **GitHub Pages** (public repo required on the free plan).
+- **Cloudflare Pages** (recommended if you want auth) — connect your GitHub
+  repo, builds run on every push, and you can put **Cloudflare Access** in
+  front so only your family can reach the site.
 
 ## One-time setup
 
-1. **Create a public repo** on your personal GitHub (e.g. `qr-redirect`).
-2. Upload these four files: `index.html`, `admin.html`, `links.json`, `README.md`.
-3. In the repo → **Settings → Pages**, set:
-   - Source: **Deploy from a branch**
-   - Branch: **main**, folder: **/ (root)**
-4. Wait ~1 minute. Your site will be at:
-   `https://<your-username>.github.io/qr-redirect/`
-5. Open `…/admin.html`, paste your base URL and repo URL once. They're stored
-   in your browser only.
+1. **Push these four files** to a public repo (`index.html`, `admin.html`, `links.json`, `README.md`).
+2. **Enable Pages** (Settings → Pages on GitHub, or connect repo in Cloudflare Pages dashboard).
+3. **Open `…/admin.html`** and fill in Settings:
+   - **Base URL**: your deployed URL (e.g. `https://qr.example.com/`)
+   - **Repo URL**: `https://github.com/yourusername/qr-redirect`
+   - **Branch**: usually `main`
+   - **GitHub token**: see below
 
-## Adding or updating a link
+### Creating the GitHub token
 
-1. Open `…/admin.html` and click **Edit links.json on GitHub**
-   (or browse to `links.json` in the repo and click the pencil icon).
-2. Add or change an entry:
-   ```json
-   {
-     "birthday-2024": "https://drive.google.com/file/d/ABC123/view",
-     "first-steps": "http://192.168.1.50:8080/videos/first-steps.mp4"
-   }
-   ```
-3. Commit. The site picks up the change within a minute.
+The admin page reads/writes `links.json` via the GitHub API. You need a
+fine-grained Personal Access Token:
 
-**Tip:** keep IDs short and sortable (`birthday-2024`, `xmas-2023-tree`) so
-they're easy to type and read.
+1. <https://github.com/settings/personal-access-tokens/new>
+2. **Repository access**: Only select repositories → pick your `qr-redirect` repo
+3. **Repository permissions** → **Contents**: Read and write
+4. Generate, copy, paste into admin page → Save
 
-## Generating a QR
+The token is stored only in your browser's localStorage. Behind Cloudflare
+Access, that browser is already gated to authenticated family members.
 
-1. Open `…/admin.html`.
-2. Find the link in the list → **Download QR PNG**.
-3. Print it into your scrapbook.
+## Daily use
+
+Open `…/admin.html`:
+
+- **Add link**: type an ID (or click *Generate random* for an opaque one),
+  paste the target URL, click *Add link*. Commits to GitHub automatically.
+- **Edit link**: click *Edit* on any row, change ID and/or target, *Save*.
+- **Delete link**: *Delete* on any row → confirm.
+- **Generate QR**: each row has *Download QR* (PNG, print-ready).
+
+After any change, GitHub Pages redeploys in ~1 min; Cloudflare Pages in ~30 s.
+The admin page itself always reads via the GitHub API, so you see your changes
+immediately — only the *redirect page* lags by the deploy time.
+
+## Encryption (default)
+
+`links.json` is **encrypted at rest** with AES-GCM, key derived via PBKDF2-SHA256
+(250 000 iterations). Anyone fetching `links.json` from your GitHub Pages site
+sees only `{v, salt, iv, ct}` — random bytes.
+
+Each generated QR URL includes the passphrase in its fragment:
+
+```
+https://you.github.io/qr-redirect/?id=abc123#k=PASSPHRASE
+```
+
+URL fragments are never sent to servers, so the passphrase never appears in
+GitHub Pages access logs or any CDN. Family members scanning a QR don't need
+to type anything — the redirect page reads the fragment, decrypts in the
+browser, and forwards them.
+
+### Setup
+
+1. Open the admin page → **Settings → Encryption passphrase**.
+2. Click **Generate** to make a strong random passphrase, then **Save**.
+3. **Copy the passphrase somewhere safe** (password manager, locked note).
+   If you lose it and clear this browser, you can't manage the file or print
+   new QRs. Existing printed QRs will still work because the passphrase is
+   inside them.
+
+### Threat model
+
+- ✅ Random visitor / bot reads `links.json` → ciphertext, useless.
+- ✅ GitHub repo source is public → still just ciphertext.
+- ✅ AI crawlers index the site → nothing meaningful to learn.
+- ❌ Anyone who has a printed QR can decode the QR image and extract the
+  passphrase, which decrypts the whole map. The QR's physical possession is
+  effectively the auth.
+- ❌ Git history retains any plaintext `links.json` ever committed. The repo
+  was emptied to `{}` before encryption, so you're clean — **never commit
+  plaintext entries again**.
 
 ## Notes
 
-- **LAN URLs** (`http://192.168.x.x/...`) only resolve when the phone scanning
-  the QR is on that LAN. The redirect itself still works from anywhere —
-  only the *final hop* is LAN-restricted.
-- **Google Drive direct links:** for videos, use the standard share URL
-  (`https://drive.google.com/file/d/FILE_ID/view`). Make sure the file is set
-  to "Anyone with the link can view."
-- `links.json` is public. Don't put anything secret in either the ID or the
-  target URL — anyone who guesses an ID can follow it.
-- The page does a 250 ms pause before redirecting so QR scanner apps have time
-  to hand off cleanly to the browser. Tweak in `index.html` if you want.
+- **LAN URLs** (`http://192.168.x.x/...`) only resolve when the scanning phone
+  is on that LAN. The redirect itself works from anywhere — only the final
+  hop is LAN-restricted.
+- **Google Drive direct links**: use the standard share URL
+  (`https://drive.google.com/file/d/FILE_ID/view`) and set the file to
+  "Anyone with the link can view."
+- **Changing passphrase**: not supported in-place. To rotate, decrypt locally,
+  clear the passphrase in admin, set a new one, then re-add each link
+  (existing printed QRs will stop working — they encode the old passphrase).

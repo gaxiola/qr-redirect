@@ -449,15 +449,42 @@
         const { content, sha } = await ghGetFile();
         state.sha = sha;
         const trimmed = content.trim();
+
         if (trimmed === "" || trimmed === "{}") {
-          // First run — no encrypted file yet.
+          // Fresh repo — nothing to load.
           state.map = {};
-        } else {
-          const blob = JSON.parse(trimmed);
-          state.map = await decryptMap(blob, pass);
+          setMode("rw");
+          render();
+          return;
         }
-        setMode("rw");
-        render();
+
+        const parsed = JSON.parse(trimmed);
+
+        // Encrypted blob → decrypt.
+        if (parsed && parsed.v === 1 && parsed.salt && parsed.iv && parsed.ct) {
+          state.map = await decryptMap(parsed, pass);
+          setMode("rw");
+          render();
+          return;
+        }
+
+        // Plaintext {id: url} map → auto-encrypt in place.
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          const entries = Object.entries(parsed);
+          const allUrlStrings = entries.every(([k, v]) => typeof v === "string");
+          if (allUrlStrings) {
+            const count = entries.length;
+            banner("info", `Plaintext links.json detected — encrypting ${count} entr${count === 1 ? "y" : "ies"}…`);
+            state.map = parsed;
+            await saveLinks("Encrypt existing links.json");
+            setMode("rw");
+            banner("success", `Encrypted ${count} existing entr${count === 1 ? "y" : "ies"}.`, 4000);
+            render();
+            return;
+          }
+        }
+
+        throw new Error("Unrecognized links.json format");
       } catch (e) {
         setMode("locked");
         state.map = {};

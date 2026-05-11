@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Redirecting…</title>
   <script>
-    // Set theme before paint to avoid flash.
     (function () {
       var saved = localStorage.getItem("qrRedirect.theme");
       var t = saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
@@ -15,25 +14,19 @@
   <style>
     :root[data-theme="light"] {
       color-scheme: light;
-      --bg: #fafafa;
-      --surface: #ffffff;
+      --bg: #fafafa; --surface: #ffffff;
       --border: rgba(0,0,0,.09);
-      --text: #18181b;
-      --text-muted: rgba(24,24,27,.6);
-      --accent: #4a7afe;
-      --accent-text: #ffffff;
+      --text: #18181b; --text-muted: rgba(24,24,27,.6);
+      --accent: #4a7afe; --accent-text: #ffffff;
       --code-bg: rgba(0,0,0,.06);
       --shadow: 0 1px 3px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.04);
     }
     :root[data-theme="dark"] {
       color-scheme: dark;
-      --bg: #0a0a0c;
-      --surface: #1c1c20;
+      --bg: #0a0a0c; --surface: #1c1c20;
       --border: rgba(255,255,255,.1);
-      --text: #f4f4f5;
-      --text-muted: rgba(244,244,245,.6);
-      --accent: #6c8eff;
-      --accent-text: #0a0a0c;
+      --text: #f4f4f5; --text-muted: rgba(244,244,245,.6);
+      --accent: #6c8eff; --accent-text: #0a0a0c;
       --code-bg: rgba(255,255,255,.1);
       --shadow: 0 1px 3px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.3);
     }
@@ -42,15 +35,12 @@
       display: flex; min-height: 100vh; margin: 0;
       align-items: center; justify-content: center;
       background: var(--bg); color: var(--text);
-      padding: 1.5rem;
-      -webkit-font-smoothing: antialiased;
+      padding: 1.5rem; -webkit-font-smoothing: antialiased;
     }
     .card {
       max-width: 28rem; text-align: center;
-      padding: 1.75rem 1.75rem 1.5rem;
-      border-radius: 14px;
-      background: var(--surface);
-      border: 1px solid var(--border);
+      padding: 1.75rem 1.75rem 1.5rem; border-radius: 14px;
+      background: var(--surface); border: 1px solid var(--border);
       box-shadow: var(--shadow);
     }
     h1 { font-size: 1.2rem; margin: 0 0 .5rem; font-weight: 600; }
@@ -63,10 +53,7 @@
       text-decoration: none; font-weight: 500;
     }
     a.button:hover { filter: brightness(1.08); }
-    code {
-      background: var(--code-bg); padding: 2px 7px; border-radius: 5px;
-      font-size: .88em;
-    }
+    code { background: var(--code-bg); padding: 2px 7px; border-radius: 5px; font-size: .88em; }
   </style>
 </head>
 <body>
@@ -77,10 +64,55 @@
   </div>
 
   <script>
+    // ---- base64url helpers ----
+    function b64urlDec(s) {
+      s = s.replace(/-/g, "+").replace(/_/g, "/");
+      while (s.length % 4) s += "=";
+      const bin = atob(s);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return bytes;
+    }
+
+    // ---- decrypt ----
+    async function deriveKey(passphrase, salt) {
+      const baseKey = await crypto.subtle.importKey(
+        "raw", new TextEncoder().encode(passphrase),
+        "PBKDF2", false, ["deriveKey"]
+      );
+      return crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt, iterations: 250000, hash: "SHA-256" },
+        baseKey,
+        { name: "AES-GCM", length: 256 },
+        false, ["decrypt"]
+      );
+    }
+    async function decryptMap(blob, passphrase) {
+      if (blob.v !== 1) throw new Error("Unsupported file format");
+      const salt = b64urlDec(blob.salt);
+      const iv = b64urlDec(blob.iv);
+      const ct = b64urlDec(blob.ct);
+      const key = await deriveKey(passphrase, salt);
+      let pt;
+      try {
+        pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ct);
+      } catch {
+        throw new Error("Wrong key for this link");
+      }
+      return JSON.parse(new TextDecoder().decode(pt));
+    }
+
+    // ---- read key from hash fragment ----
+    function readKey() {
+      // Accept "#k=xxx" or "#xxx" (just the key)
+      let h = location.hash.replace(/^#/, "");
+      if (h.startsWith("k=")) h = h.slice(2);
+      return h ? decodeURIComponent(h) : null;
+    }
+
     (async function () {
-      const params = new URLSearchParams(location.search);
-      const id = (params.get("id") || "").trim();
-      const card = document.getElementById("card");
+      const id = (new URLSearchParams(location.search).get("id") || "").trim();
+      const k = readKey();
       const title = document.getElementById("title");
       const msg = document.getElementById("msg");
       const action = document.getElementById("action");
@@ -95,31 +127,38 @@
       }
 
       if (!id) {
-        fail(
-          "No link ID provided",
-          "Add ?id=your-link-id to the URL.",
-          { href: "admin.html", label: "Open admin page" }
-        );
+        fail("No link ID", "Add ?id=your-link-id to the URL.",
+          { href: "admin.html", label: "Open admin page" });
+        return;
+      }
+      if (!k) {
+        fail("Missing decryption key",
+          "This QR is missing its key fragment (the #k=… part).");
         return;
       }
 
-      let map;
+      let blob;
       try {
         const res = await fetch("links.json?cb=" + Date.now(), { cache: "no-store" });
         if (!res.ok) throw new Error("HTTP " + res.status);
-        map = await res.json();
+        blob = await res.json();
       } catch (e) {
         fail("Could not load link map", String(e));
         return;
       }
 
+      let map;
+      try {
+        map = await decryptMap(blob, k);
+      } catch (e) {
+        fail("Could not decrypt", e.message);
+        return;
+      }
+
       const target = map[id];
       if (!target) {
-        fail(
-          "Link not found",
-          'No entry for "' + id + '" in links.json.',
-          { href: "admin.html", label: "Open admin page" }
-        );
+        fail("Link not found",
+          'No entry for "' + id + '". It may have been deleted.');
         return;
       }
 
