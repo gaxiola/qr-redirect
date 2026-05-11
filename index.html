@@ -5,34 +5,61 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Redirecting…</title>
   <style>
-    :root { color-scheme: light dark; }
+    :root {
+      color-scheme: light dark;
+      --bg: #fafafa;
+      --surface: #ffffff;
+      --border: rgba(0,0,0,.08);
+      --text: #18181b;
+      --text-muted: rgba(24,24,27,.6);
+      --accent: #4a7afe;
+      --accent-text: #ffffff;
+      --code-bg: rgba(0,0,0,.06);
+      --shadow: 0 1px 3px rgba(0,0,0,.05), 0 6px 24px rgba(0,0,0,.04);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0e0e10;
+        --surface: #18181b;
+        --border: rgba(255,255,255,.08);
+        --text: #f4f4f5;
+        --text-muted: rgba(244,244,245,.6);
+        --accent: #6c8eff;
+        --accent-text: #0e0e10;
+        --code-bg: rgba(255,255,255,.08);
+        --shadow: 0 1px 3px rgba(0,0,0,.4);
+      }
+    }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       display: flex; min-height: 100vh; margin: 0;
       align-items: center; justify-content: center;
-      background: #fafafa; color: #222;
+      background: var(--bg); color: var(--text);
       padding: 1.5rem;
-    }
-    @media (prefers-color-scheme: dark) {
-      body { background: #111; color: #eee; }
-      a { color: #6cf; }
+      -webkit-font-smoothing: antialiased;
     }
     .card {
       max-width: 28rem; text-align: center;
-      padding: 1.5rem 1.75rem;
-      border-radius: 12px;
-      background: rgba(127,127,127,.08);
+      padding: 1.75rem 1.75rem 1.5rem;
+      border-radius: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
     }
-    h1 { font-size: 1.2rem; margin: 0 0 .5rem; }
+    h1 { font-size: 1.2rem; margin: 0 0 .5rem; font-weight: 600; }
     p  { margin: .35rem 0; line-height: 1.5; font-size: .95rem; }
-    .muted { opacity: .65; font-size: .85rem; }
+    .muted { color: var(--text-muted); font-size: .85rem; }
     a.button {
-      display: inline-block; margin-top: .9rem;
-      padding: .55rem 1.1rem; border-radius: 8px;
-      background: #4a7afe; color: white; text-decoration: none;
-      font-weight: 500;
+      display: inline-block; margin-top: 1rem;
+      padding: .6rem 1.15rem; border-radius: 8px;
+      background: var(--accent); color: var(--accent-text);
+      text-decoration: none; font-weight: 500;
     }
-    code { background: rgba(127,127,127,.15); padding: 1px 6px; border-radius: 4px; }
+    a.button:hover { filter: brightness(1.08); }
+    code {
+      background: var(--code-bg); padding: 2px 7px; border-radius: 5px;
+      font-size: .88em;
+    }
   </style>
 </head>
 <body>
