@@ -476,7 +476,7 @@
             const count = entries.length;
             banner("info", `Plaintext links.json detected — encrypting ${count} entr${count === 1 ? "y" : "ies"}…`);
             state.map = parsed;
-            await saveLinks("Encrypt existing links.json");
+            await saveLinks("Update links.json");
             setMode("rw");
             banner("success", `Encrypted ${count} existing entr${count === 1 ? "y" : "ies"}.`, 4000);
             render();
@@ -658,7 +658,7 @@
         await mutate(() => {
           delete state.map[id];
           state.map[newId] = newTarget;
-        }, `Update link: ${id}` + (newId !== id ? ` → ${newId}` : ""));
+        }, "Update links.json");
         state.editing = null;
         render();
       };
@@ -668,7 +668,7 @@
     }
     async function deleteLink(id) {
       if (!confirm(`Delete link "${id}"?`)) return;
-      try { await mutate(() => { delete state.map[id]; }, `Delete link: ${id}`); render(); } catch {}
+      try { await mutate(() => { delete state.map[id]; }, "Update links.json"); render(); } catch {}
     }
 
     // ---- wire up settings ----
@@ -738,7 +738,7 @@
       if (!target) { banner("error", "Target URL is required."); return; }
       if (state.map[id]) { banner("error", `ID "${id}" already exists.`); return; }
       try {
-        await mutate(() => { state.map[id] = target; }, `Add link: ${id}`);
+        await mutate(() => { state.map[id] = target; }, "Update links.json");
         $("newId").value = ""; $("newTarget").value = "";
         render();
       } catch {}

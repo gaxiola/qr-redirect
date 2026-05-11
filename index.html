@@ -162,11 +162,31 @@
         return;
       }
 
-      title.textContent = "Redirecting…";
-      msg.innerHTML = 'Sending you to <code>' + id + '</code>.';
-      action.innerHTML =
-        '<a class="button" href="' + target + '">Tap if not redirected</a>';
-      setTimeout(function () { location.replace(target); }, 250);
+      // For Google app URLs on iOS, a tap (not a JS redirect) is required
+      // to trigger universal-link handoff to the native app.
+      function isGoogleAppUrl(u) {
+        try {
+          const h = new URL(u).hostname.toLowerCase();
+          return /(?:^|\.)(drive|docs|sheets|slides|forms)\.google\.com$/.test(h);
+        } catch { return false; }
+      }
+      function isIOS() {
+        return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+          (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      }
+
+      if (isGoogleAppUrl(target) && isIOS()) {
+        title.textContent = "Open in app";
+        msg.textContent = "Tap below to open in the Google app.";
+        action.innerHTML =
+          '<a class="button" href="' + target + '">Open</a>';
+      } else {
+        title.textContent = "Redirecting…";
+        msg.innerHTML = 'Sending you to <code>' + id + '</code>.';
+        action.innerHTML =
+          '<a class="button" href="' + target + '">Tap if not redirected</a>';
+        setTimeout(function () { location.replace(target); }, 250);
+      }
     })();
   </script>
 </body>
