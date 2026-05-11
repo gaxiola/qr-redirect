@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QR Redirect — Admin</title>
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 900px; margin: 0 auto; padding: 1.5rem;
+      background: #fafafa; color: #222;
+    }
+    @media (prefers-color-scheme: dark) {
+      body { background: #111; color: #eee; }
+      input, textarea, button { background: #1c1c1c; color: #eee; border-color: #333; }
+      .card, .row { background: #181818; }
+      a { color: #6cf; }
+    }
+    h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
+    .sub { opacity: .65; font-size: .9rem; margin-bottom: 1.5rem; }
+    .card {
+      background: white; border: 1px solid rgba(127,127,127,.2);
+      border-radius: 10px; padding: 1rem 1.1rem; margin-bottom: 1rem;
+    }
+    label { display: block; font-size: .85rem; opacity: .8; margin-bottom: .25rem; }
+    input[type=text], input[type=url], textarea {
+      width: 100%; padding: .55rem .65rem; font-size: .95rem;
+      border: 1px solid rgba(127,127,127,.4); border-radius: 6px;
+      font-family: inherit;
+    }
+    textarea { font-family: ui-monospace, "SF Mono", Menlo, monospace; min-height: 5rem; }
+    button {
+      padding: .5rem .9rem; border-radius: 6px;
+      border: 1px solid rgba(127,127,127,.4);
+      background: #4a7afe; color: white; cursor: pointer;
+      font-size: .9rem;
+    }
+    button.ghost { background: transparent; color: inherit; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .row {
+      display: flex; gap: 1rem; align-items: flex-start;
+      padding: 1rem; border: 1px solid rgba(127,127,127,.2);
+      border-radius: 10px; margin-bottom: .75rem;
+      background: white;
+    }
+    .row .info { flex: 1; min-width: 0; }
+    .row .qr { flex-shrink: 0; }
+    .row .qr img { display: block; width: 140px; height: 140px; }
+    .id { font-weight: 600; font-size: 1rem; }
+    .target {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: .82rem; opacity: .75; word-break: break-all;
+      margin: .25rem 0 .5rem;
+    }
+    .encoded {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: .78rem; opacity: .6; word-break: break-all;
+    }
+    .actions { margin-top: .6rem; display: flex; flex-wrap: wrap; gap: .4rem; }
+    .actions a, .actions button { font-size: .82rem; padding: .35rem .65rem; }
+    .pill {
+      display: inline-block; font-size: .72rem; padding: .15rem .5rem;
+      border-radius: 999px; background: rgba(127,127,127,.2); margin-left: .4rem;
+    }
+    #empty { opacity: .6; font-style: italic; padding: 1rem 0; }
+    code { background: rgba(127,127,127,.15); padding: 1px 6px; border-radius: 4px; }
+    details { margin-top: .5rem; }
+    summary { cursor: pointer; opacity: .8; font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <h1>QR Redirect — Admin</h1>
+  <div class="sub">View your links, generate QR codes, and edit the mapping on GitHub.</div>
+
+  <div class="card">
+    <label for="base">Your GitHub Pages base URL</label>
+    <input type="url" id="base" placeholder="https://yourusername.github.io/qr-redirect/">
+    <div style="display:flex; gap:.5rem; margin-top:.5rem; align-items:center;">
+      <button id="saveBase">Save</button>
+      <span class="sub" id="baseStatus" style="margin:0;"></span>
+    </div>
+    <details>
+      <summary>Why this is needed</summary>
+      <div class="sub" style="margin-top:.4rem;">
+        QR codes need to encode an absolute URL. This base is stored only in your browser
+        (localStorage) so the admin page can build and display the right QR.
+      </div>
+    </details>
+  </div>
+
+  <div class="card">
+    <label>Edit links</label>
+    <div class="sub" style="margin-bottom:.6rem;">
+      Open <code>links.json</code> on GitHub and edit it from the web UI (works on phone too).
+    </div>
+    <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+      <input type="url" id="repoUrl" placeholder="https://github.com/yourusername/qr-redirect">
+      <button id="saveRepo">Save repo</button>
+      <a id="editLink" class="ghost" style="display:none;" target="_blank">→ Edit links.json on GitHub</a>
+    </div>
+  </div>
+
+  <h2 style="font-size:1.1rem; margin-top:1.5rem;">Current links</h2>
+  <div id="list"><div id="empty">Loading…</div></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const baseInput = $("base");
+    const repoInput = $("repoUrl");
+    const baseStatus = $("baseStatus");
+    const editLink = $("editLink");
+    const list = $("list");
+
+    const STORE_BASE = "qrRedirect.base";
+    const STORE_REPO = "qrRedirect.repo";
+
+    function loadStored() {
+      const b = localStorage.getItem(STORE_BASE) || "";
+      const r = localStorage.getItem(STORE_REPO) || "";
+      baseInput.value = b;
+      repoInput.value = r;
+      updateEditLink();
+    }
+    function updateEditLink() {
+      const r = repoInput.value.trim().replace(/\/$/, "");
+      if (r) {
+        editLink.href = r + "/edit/main/links.json";
+        editLink.style.display = "inline";
+      } else {
+        editLink.style.display = "none";
+      }
+    }
+    $("saveBase").onclick = () => {
+      let v = baseInput.value.trim();
+      if (v && !v.endsWith("/")) v += "/";
+      baseInput.value = v;
+      localStorage.setItem(STORE_BASE, v);
+      baseStatus.textContent = "Saved.";
+      render();
+      setTimeout(() => (baseStatus.textContent = ""), 1500);
+    };
+    $("saveRepo").onclick = () => {
+      localStorage.setItem(STORE_REPO, repoInput.value.trim());
+      updateEditLink();
+    };
+
+    function makeQR(text) {
+      const qr = qrcode(0, "M");
+      qr.addData(text);
+      qr.make();
+      return qr.createDataURL(6, 4); // cell size 6, 4-cell margin
+    }
+
+    function downloadDataURL(dataUrl, filename) {
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    async function render() {
+      let map;
+      try {
+        const res = await fetch("links.json?cb=" + Date.now(), { cache: "no-store" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        map = await res.json();
+      } catch (e) {
+        list.innerHTML =
+          '<div id="empty">Could not load links.json: ' + e + "</div>";
+        return;
+      }
+
+      const base = baseInput.value.trim();
+      const ids = Object.keys(map);
+      if (!ids.length) {
+        list.innerHTML = '<div id="empty">No links yet. Edit links.json to add some.</div>';
+        return;
+      }
+
+      list.innerHTML = "";
+      ids.sort();
+      for (const id of ids) {
+        const target = map[id];
+        const encoded = base
+          ? base + "?id=" + encodeURIComponent(id)
+          : "(set base URL above to generate QR)";
+
+        const row = document.createElement("div");
+        row.className = "row";
+
+        const info = document.createElement("div");
+        info.className = "info";
+        info.innerHTML =
+          '<div class="id">' + id + '<span class="pill">id</span></div>' +
+          '<div class="target">→ ' + target + "</div>" +
+          '<div class="encoded">QR encodes: ' + encoded + "</div>";
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        if (base) {
+          const dlBtn = document.createElement("button");
+          dlBtn.textContent = "Download QR PNG";
+          dlBtn.onclick = () => downloadDataURL(makeQR(encoded), "qr-" + id + ".png");
+          actions.appendChild(dlBtn);
+
+          const copyBtn = document.createElement("button");
+          copyBtn.className = "ghost";
+          copyBtn.textContent = "Copy QR URL";
+          copyBtn.onclick = async () => {
+            await navigator.clipboard.writeText(encoded);
+            copyBtn.textContent = "Copied!";
+            setTimeout(() => (copyBtn.textContent = "Copy QR URL"), 1200);
+          };
+          actions.appendChild(copyBtn);
+        }
+
+        const openBtn = document.createElement("a");
+        openBtn.className = "ghost";
+        openBtn.textContent = "Open target";
+        openBtn.href = target;
+        openBtn.target = "_blank";
+        actions.appendChild(openBtn);
+
+        info.appendChild(actions);
+        row.appendChild(info);
+
+        if (base) {
+          const qrWrap = document.createElement("div");
+          qrWrap.className = "qr";
+          const img = document.createElement("img");
+          img.src = makeQR(encoded);
+          img.alt = "QR for " + id;
+          qrWrap.appendChild(img);
+          row.appendChild(qrWrap);
+        }
+
+        list.appendChild(row);
+      }
+    }
+
+    loadStored();
+    render();
+  </script>
+</body>
+</html>
