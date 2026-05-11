@@ -4,31 +4,38 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Redirecting…</title>
+  <script>
+    // Set theme before paint to avoid flash.
+    (function () {
+      var saved = localStorage.getItem("qrRedirect.theme");
+      var t = saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.dataset.theme = t;
+    })();
+  </script>
   <style>
-    :root {
-      color-scheme: light dark;
+    :root[data-theme="light"] {
+      color-scheme: light;
       --bg: #fafafa;
       --surface: #ffffff;
-      --border: rgba(0,0,0,.08);
+      --border: rgba(0,0,0,.09);
       --text: #18181b;
       --text-muted: rgba(24,24,27,.6);
       --accent: #4a7afe;
       --accent-text: #ffffff;
       --code-bg: rgba(0,0,0,.06);
-      --shadow: 0 1px 3px rgba(0,0,0,.05), 0 6px 24px rgba(0,0,0,.04);
+      --shadow: 0 1px 3px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.04);
     }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #0e0e10;
-        --surface: #18181b;
-        --border: rgba(255,255,255,.08);
-        --text: #f4f4f5;
-        --text-muted: rgba(244,244,245,.6);
-        --accent: #6c8eff;
-        --accent-text: #0e0e10;
-        --code-bg: rgba(255,255,255,.08);
-        --shadow: 0 1px 3px rgba(0,0,0,.4);
-      }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0a0a0c;
+      --surface: #1c1c20;
+      --border: rgba(255,255,255,.1);
+      --text: #f4f4f5;
+      --text-muted: rgba(244,244,245,.6);
+      --accent: #6c8eff;
+      --accent-text: #0a0a0c;
+      --code-bg: rgba(255,255,255,.1);
+      --shadow: 0 1px 3px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.3);
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -120,7 +127,6 @@
       msg.innerHTML = 'Sending you to <code>' + id + '</code>.';
       action.innerHTML =
         '<a class="button" href="' + target + '">Tap if not redirected</a>';
-      // brief pause so the QR scanner has time to hand off cleanly
       setTimeout(function () { location.replace(target); }, 250);
     })();
   </script>

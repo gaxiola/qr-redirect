@@ -4,82 +4,186 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>QR Redirect — Admin</title>
+  <script>
+    (function () {
+      var saved = localStorage.getItem("qrRedirect.theme");
+      var t = saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.dataset.theme = t;
+    })();
+  </script>
   <style>
-    :root { color-scheme: light dark; }
+    :root[data-theme="light"] {
+      color-scheme: light;
+      --bg: #fafafa;
+      --surface: #ffffff;
+      --surface-2: #f4f4f5;
+      --border: rgba(0,0,0,.09);
+      --border-strong: rgba(0,0,0,.18);
+      --text: #18181b;
+      --text-muted: rgba(24,24,27,.62);
+      --accent: #4a7afe;
+      --accent-hover: #3d6bef;
+      --accent-text: #ffffff;
+      --ghost-hover: rgba(0,0,0,.04);
+      --code-bg: rgba(0,0,0,.06);
+      --pill-bg: rgba(0,0,0,.06);
+      --shadow: 0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.04);
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0a0a0c;
+      --surface: #1c1c20;
+      --surface-2: #2a2a30;
+      --border: rgba(255,255,255,.1);
+      --border-strong: rgba(255,255,255,.2);
+      --text: #f4f4f5;
+      --text-muted: rgba(244,244,245,.62);
+      --accent: #6c8eff;
+      --accent-hover: #819dff;
+      --accent-text: #0a0a0c;
+      --ghost-hover: rgba(255,255,255,.06);
+      --code-bg: rgba(255,255,255,.1);
+      --pill-bg: rgba(255,255,255,.1);
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 1px 3px rgba(0,0,0,.3);
+    }
     * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       max-width: 900px; margin: 0 auto; padding: 1.5rem;
-      background: #fafafa; color: #222;
+      background: var(--bg); color: var(--text);
+      -webkit-font-smoothing: antialiased;
     }
-    @media (prefers-color-scheme: dark) {
-      body { background: #111; color: #eee; }
-      input, textarea, button { background: #1c1c1c; color: #eee; border-color: #333; }
-      .card, .row { background: #181818; }
-      a { color: #6cf; }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 1.5rem; gap: 1rem;
     }
-    h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
-    .sub { opacity: .65; font-size: .9rem; margin-bottom: 1.5rem; }
-    .card {
-      background: white; border: 1px solid rgba(127,127,127,.2);
-      border-radius: 10px; padding: 1rem 1.1rem; margin-bottom: 1rem;
+    .topbar .title h1 { font-size: 1.4rem; margin: 0 0 .25rem; font-weight: 600; }
+    .topbar .title .sub { color: var(--text-muted); font-size: .9rem; margin: 0; }
+    .theme-toggle {
+      display: inline-flex; padding: 3px; border-radius: 8px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      flex-shrink: 0;
     }
-    label { display: block; font-size: .85rem; opacity: .8; margin-bottom: .25rem; }
-    input[type=text], input[type=url], textarea {
-      width: 100%; padding: .55rem .65rem; font-size: .95rem;
-      border: 1px solid rgba(127,127,127,.4); border-radius: 6px;
+    .theme-toggle button {
+      background: transparent; border: none; cursor: pointer;
+      padding: .35rem .65rem; border-radius: 6px;
+      color: var(--text-muted); font-size: .8rem; font-weight: 500;
       font-family: inherit;
+    }
+    .theme-toggle button[aria-pressed="true"] {
+      background: var(--surface); color: var(--text);
+      box-shadow: 0 1px 2px rgba(0,0,0,.1);
+    }
+    h2 { font-weight: 600; font-size: 1.1rem; margin: 1.5rem 0 .75rem; }
+    .sub { color: var(--text-muted); font-size: .9rem; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: 1rem 1.1rem; margin-bottom: 1rem;
+      box-shadow: var(--shadow);
+    }
+    label {
+      display: block; font-size: .8rem; font-weight: 500;
+      color: var(--text-muted); margin-bottom: .35rem;
+    }
+    input[type=text], input[type=url], textarea {
+      width: 100%; padding: .55rem .7rem; font-size: .95rem;
+      border: 1px solid var(--border-strong); border-radius: 7px;
+      font-family: inherit; background: var(--surface-2); color: var(--text);
+    }
+    input:focus, textarea:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
     }
     textarea { font-family: ui-monospace, "SF Mono", Menlo, monospace; min-height: 5rem; }
     button {
-      padding: .5rem .9rem; border-radius: 6px;
-      border: 1px solid rgba(127,127,127,.4);
-      background: #4a7afe; color: white; cursor: pointer;
-      font-size: .9rem;
+      padding: .5rem .95rem; border-radius: 7px;
+      border: 1px solid transparent;
+      background: var(--accent); color: var(--accent-text);
+      cursor: pointer; font-size: .9rem; font-weight: 500;
+      font-family: inherit;
     }
-    button.ghost { background: transparent; color: inherit; }
+    button:hover { background: var(--accent-hover); }
+    button.ghost {
+      background: transparent; color: var(--text);
+      border-color: var(--border-strong);
+    }
+    button.ghost:hover { background: var(--ghost-hover); }
     button:disabled { opacity: .5; cursor: not-allowed; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    a.ghost {
+      color: var(--text); border: 1px solid var(--border-strong);
+      padding: .5rem .95rem; border-radius: 7px; font-size: .9rem;
+      font-weight: 500; display: inline-block;
+    }
+    a.ghost:hover { background: var(--ghost-hover); text-decoration: none; }
     .row {
       display: flex; gap: 1rem; align-items: flex-start;
-      padding: 1rem; border: 1px solid rgba(127,127,127,.2);
+      padding: 1rem; border: 1px solid var(--border);
       border-radius: 10px; margin-bottom: .75rem;
-      background: white;
+      background: var(--surface);
+      box-shadow: var(--shadow);
     }
     .row .info { flex: 1; min-width: 0; }
     .row .qr { flex-shrink: 0; }
-    .row .qr img { display: block; width: 140px; height: 140px; }
+    .row .qr img {
+      display: block; width: 140px; height: 140px;
+      background: white; padding: 6px; border-radius: 6px;
+      border: 1px solid var(--border);
+    }
     .id { font-weight: 600; font-size: 1rem; }
     .target {
       font-family: ui-monospace, "SF Mono", Menlo, monospace;
-      font-size: .82rem; opacity: .75; word-break: break-all;
-      margin: .25rem 0 .5rem;
+      font-size: .82rem; color: var(--text-muted); word-break: break-all;
+      margin: .35rem 0 .5rem;
     }
     .encoded {
       font-family: ui-monospace, "SF Mono", Menlo, monospace;
-      font-size: .78rem; opacity: .6; word-break: break-all;
+      font-size: .78rem; color: var(--text-muted); word-break: break-all;
+      opacity: .85;
     }
-    .actions { margin-top: .6rem; display: flex; flex-wrap: wrap; gap: .4rem; }
-    .actions a, .actions button { font-size: .82rem; padding: .35rem .65rem; }
+    .actions { margin-top: .7rem; display: flex; flex-wrap: wrap; gap: .4rem; }
+    .actions a, .actions button { font-size: .82rem; padding: .4rem .75rem; }
     .pill {
-      display: inline-block; font-size: .72rem; padding: .15rem .5rem;
-      border-radius: 999px; background: rgba(127,127,127,.2); margin-left: .4rem;
+      display: inline-block; font-size: .68rem; font-weight: 500;
+      padding: .15rem .55rem; border-radius: 999px;
+      background: var(--pill-bg); color: var(--text-muted);
+      margin-left: .5rem; text-transform: uppercase; letter-spacing: .04em;
+      vertical-align: middle;
     }
-    #empty { opacity: .6; font-style: italic; padding: 1rem 0; }
-    code { background: rgba(127,127,127,.15); padding: 1px 6px; border-radius: 4px; }
-    details { margin-top: .5rem; }
-    summary { cursor: pointer; opacity: .8; font-size: .9rem; }
+    #empty { color: var(--text-muted); font-style: italic; padding: 1rem 0; }
+    code {
+      background: var(--code-bg); padding: 2px 7px; border-radius: 5px;
+      font-size: .88em;
+    }
+    details { margin-top: .6rem; }
+    summary {
+      cursor: pointer; color: var(--text-muted); font-size: .85rem;
+      user-select: none;
+    }
+    summary:hover { color: var(--text); }
   </style>
 </head>
 <body>
-  <h1>QR Redirect — Admin</h1>
-  <div class="sub">View your links, generate QR codes, and edit the mapping on GitHub.</div>
+  <div class="topbar">
+    <div class="title">
+      <h1>QR Redirect — Admin</h1>
+      <p class="sub">View your links, generate QR codes, and edit the mapping on GitHub.</p>
+    </div>
+    <div class="theme-toggle" role="group" aria-label="Theme">
+      <button data-theme-btn="light" title="Light">☀</button>
+      <button data-theme-btn="dark" title="Dark">☾</button>
+      <button data-theme-btn="auto" title="Match system">A</button>
+    </div>
+  </div>
 
   <div class="card">
     <label for="base">Your GitHub Pages base URL</label>
     <input type="url" id="base" placeholder="https://yourusername.github.io/qr-redirect/">
     <div style="display:flex; gap:.5rem; margin-top:.5rem; align-items:center;">
       <button id="saveBase">Save</button>
-      <span class="sub" id="baseStatus" style="margin:0;"></span>
+      <span class="sub" id="baseStatus"></span>
     </div>
     <details>
       <summary>Why this is needed</summary>
@@ -92,17 +196,17 @@
 
   <div class="card">
     <label>Edit links</label>
-    <div class="sub" style="margin-bottom:.6rem;">
+    <p class="sub" style="margin: 0 0 .6rem;">
       Open <code>links.json</code> on GitHub and edit it from the web UI (works on phone too).
-    </div>
-    <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+    </p>
+    <div style="display:flex; gap:.5rem; flex-wrap:wrap; align-items:center;">
       <input type="url" id="repoUrl" placeholder="https://github.com/yourusername/qr-redirect">
       <button id="saveRepo">Save repo</button>
       <a id="editLink" class="ghost" style="display:none;" target="_blank">→ Edit links.json on GitHub</a>
     </div>
   </div>
 
-  <h2 style="font-size:1.1rem; margin-top:1.5rem;">Current links</h2>
+  <h2>Current links</h2>
   <div id="list"><div id="empty">Loading…</div></div>
 
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
@@ -116,19 +220,43 @@
 
     const STORE_BASE = "qrRedirect.base";
     const STORE_REPO = "qrRedirect.repo";
+    const STORE_THEME = "qrRedirect.theme";
 
+    // ---- theme toggle ----
+    function applyTheme(choice) {
+      let resolved = choice;
+      if (choice === "auto") {
+        resolved = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        localStorage.removeItem(STORE_THEME);
+      } else {
+        localStorage.setItem(STORE_THEME, choice);
+      }
+      document.documentElement.dataset.theme = resolved;
+      document.querySelectorAll("[data-theme-btn]").forEach((b) => {
+        b.setAttribute("aria-pressed", b.dataset.themeBtn === choice ? "true" : "false");
+      });
+    }
+    document.querySelectorAll("[data-theme-btn]").forEach((b) => {
+      b.addEventListener("click", () => applyTheme(b.dataset.themeBtn));
+    });
+    // Reflect current preference in the toggle on load:
+    applyTheme(localStorage.getItem(STORE_THEME) || "auto");
+    // If user is on "auto", follow system changes live.
+    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+      if (!localStorage.getItem(STORE_THEME)) applyTheme("auto");
+    });
+
+    // ---- saved base / repo ----
     function loadStored() {
-      const b = localStorage.getItem(STORE_BASE) || "";
-      const r = localStorage.getItem(STORE_REPO) || "";
-      baseInput.value = b;
-      repoInput.value = r;
+      baseInput.value = localStorage.getItem(STORE_BASE) || "";
+      repoInput.value = localStorage.getItem(STORE_REPO) || "";
       updateEditLink();
     }
     function updateEditLink() {
       const r = repoInput.value.trim().replace(/\/$/, "");
       if (r) {
         editLink.href = r + "/edit/main/links.json";
-        editLink.style.display = "inline";
+        editLink.style.display = "inline-block";
       } else {
         editLink.style.display = "none";
       }
@@ -147,13 +275,13 @@
       updateEditLink();
     };
 
+    // ---- QR rendering ----
     function makeQR(text) {
       const qr = qrcode(0, "M");
       qr.addData(text);
       qr.make();
-      return qr.createDataURL(6, 4); // cell size 6, 4-cell margin
+      return qr.createDataURL(6, 4);
     }
-
     function downloadDataURL(dataUrl, filename) {
       const a = document.createElement("a");
       a.href = dataUrl;
@@ -170,8 +298,7 @@
         if (!res.ok) throw new Error("HTTP " + res.status);
         map = await res.json();
       } catch (e) {
-        list.innerHTML =
-          '<div id="empty">Could not load links.json: ' + e + "</div>";
+        list.innerHTML = '<div id="empty">Could not load links.json: ' + e + "</div>";
         return;
       }
 
