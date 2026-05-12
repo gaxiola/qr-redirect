@@ -81,12 +81,25 @@
       display: block; font-size: .8rem; font-weight: 500;
       color: var(--text-muted); margin-bottom: .35rem;
     }
-    input[type=text], input[type=url], input[type=password], textarea {
+    input[type=text], input[type=url], input[type=password], input[type=search], textarea {
       width: 100%; padding: .55rem .7rem; font-size: .95rem;
       border: 1px solid var(--border-strong); border-radius: 7px;
       font-family: inherit; background: var(--surface-2); color: var(--text);
     }
-    input:focus, textarea:focus {
+    input[type=search] { -webkit-appearance: none; }
+    select {
+      padding: .55rem 2rem .55rem .7rem; font-size: .95rem;
+      border: 1px solid var(--border-strong); border-radius: 7px;
+      background: var(--surface-2); color: var(--text);
+      font-family: inherit; cursor: pointer;
+      appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                        linear-gradient(135deg, currentColor 50%, transparent 50%);
+      background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%;
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+    }
+    select:focus, input:focus, textarea:focus {
       outline: none; border-color: var(--accent);
       box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
     }
@@ -174,6 +187,16 @@
     }
     .mode-pill.live    { background: color-mix(in srgb, var(--success) 20%, transparent); color: var(--success); }
     .mode-pill.locked  { background: color-mix(in srgb, var(--danger) 18%, transparent);  color: var(--danger); }
+    .controls {
+      display: flex; gap: .5rem; margin-bottom: .9rem;
+      flex-wrap: wrap; align-items: center;
+    }
+    .controls > input[type=search] { flex: 1; min-width: 14rem; }
+    .pagination {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 1rem; gap: 1rem; flex-wrap: wrap;
+    }
+    .pagination .info { color: var(--text-muted); font-size: .9rem; }
   </style>
 </head>
 <body>
@@ -265,7 +288,21 @@
   </div>
 
   <h2>Current links</h2>
+  <div id="controls" class="controls" style="display:none;">
+    <input type="search" id="filter" placeholder="Search by ID or target URL…">
+    <select id="sort" aria-label="Sort">
+      <option value="id-asc">A→Z by ID</option>
+      <option value="id-desc">Z→A by ID</option>
+      <option value="recent">Newest first</option>
+      <option value="oldest">Oldest first</option>
+    </select>
+  </div>
   <div id="list"><div id="empty">Loading…</div></div>
+  <div id="pagination" class="pagination" style="display:none;">
+    <button id="prev" class="ghost" type="button">← Prev</button>
+    <span id="pageInfo" class="info"></span>
+    <button id="next" class="ghost" type="button">Next →</button>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <script>
@@ -278,7 +315,11 @@
     const STORE_PASS   = "qrRedirect.pass";
     const STORE_THEME  = "qrRedirect.theme";
 
-    const state = { map: {}, sha: null, mode: "locked", editing: null };
+    const PAGE_SIZE = 10;
+    const state = {
+      map: {}, sha: null, mode: "locked", editing: null,
+      filter: "", sort: "id-asc", page: 1
+    };
 
     // ---- theme toggle ----
     function applyTheme(choice) {
@@ -550,26 +591,70 @@
     }
 
     // ---- rendering ----
+    function getFilteredSortedIds() {
+      const q = state.filter.trim().toLowerCase();
+      let ids = Object.keys(state.map);
+      if (q) {
+        ids = ids.filter((id) => {
+          const t = state.map[id] || "";
+          return id.toLowerCase().includes(q) || t.toLowerCase().includes(q);
+        });
+      }
+      switch (state.sort) {
+        case "id-asc":  ids.sort(); break;
+        case "id-desc": ids.sort().reverse(); break;
+        case "recent":  ids.reverse(); break;
+        case "oldest":  /* insertion order — no-op */ break;
+      }
+      return ids;
+    }
+
     function render(emptyMsg) {
       const list = $("list");
       const rw = state.mode === "rw";
       $("addLink").disabled = !rw;
       $("addLink").title = rw ? "" : "Set passphrase, repo, and token to enable editing.";
 
-      const ids = Object.keys(state.map).sort();
-      if (!ids.length) {
+      const totalEntries = Object.keys(state.map).length;
+      $("controls").style.display = totalEntries > 0 ? "flex" : "none";
+
+      if (!totalEntries) {
         list.innerHTML = '<div id="empty">' +
-          (emptyMsg || "No links yet. Add one above.") + '</div>';
+          (emptyMsg || "No links yet. Add one above.") + "</div>";
+        $("pagination").style.display = "none";
         return;
       }
+
+      const ids = getFilteredSortedIds();
+      const total = ids.length;
+      const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      if (state.page > totalPages) state.page = totalPages;
+      if (state.page < 1) state.page = 1;
+
+      if (!total) {
+        list.innerHTML = '<div id="empty">No matches.</div>';
+        $("pagination").style.display = "none";
+        return;
+      }
+
+      const start = (state.page - 1) * PAGE_SIZE;
+      const pageIds = ids.slice(start, start + PAGE_SIZE);
+
       list.innerHTML = "";
-      for (const id of ids) {
+      for (const id of pageIds) {
         const row = document.createElement("div");
         row.className = "row";
         if (state.editing === id) row.appendChild(renderEdit(id));
         else renderView(row, id, rw);
         list.appendChild(row);
       }
+
+      $("pagination").style.display = "flex";
+      $("pageInfo").textContent = totalPages > 1
+        ? `Page ${state.page} of ${totalPages} · ${total} total`
+        : `${total} total`;
+      $("prev").disabled = state.page <= 1;
+      $("next").disabled = state.page >= totalPages;
     }
     function renderView(row, id, rw) {
       const target = state.map[id];
@@ -743,6 +828,20 @@
         render();
       } catch {}
     };
+
+    // ---- filter / sort / pagination ----
+    $("filter").addEventListener("input", (e) => {
+      state.filter = e.target.value;
+      state.page = 1;
+      render();
+    });
+    $("sort").addEventListener("change", (e) => {
+      state.sort = e.target.value;
+      state.page = 1;
+      render();
+    });
+    $("prev").onclick = () => { state.page--; render(); };
+    $("next").onclick = () => { state.page++; render(); };
 
     loadStored();
     loadLinks();
